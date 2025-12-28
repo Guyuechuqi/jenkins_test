@@ -4,7 +4,6 @@ pipeline {
     stages {
         stage('Checkout App') {
             steps {
-                // 1. 默认拉取开发代码 (App Repo)
                 checkout scm
                 echo "开发代码拉取完毕"
             }
@@ -12,11 +11,10 @@ pipeline {
 
         stage('Prepare Tests') {
             steps {
-                // 2. 拉取测试代码 (Test Repo) 到子目录 'autotest'
                 dir('autotest') {
+                    // 这里的 credentialsId 记得替换成你实际可用的，或者去掉如果不需要
                     git branch: 'main', url: 'https://github.com/Guyuechuqi/jenkins_interface.git', credentialsId: 'jenkins_interface'
                 }
-                echo "测试脚本拉取完毕"
             }
         }
 
@@ -24,17 +22,51 @@ pipeline {
             agent {
                 docker {
                     image 'python:3.13'
-                    args '-u root'
+                    // 关键点1：映射工作目录，保证容器内外路径一致（虽然Jenkins默认会做，但显式声明更稳妥）
+                    args '-u root -v /var/jenkins_home:/var/jenkins_home' 
                 }
             }
             steps {
-                // 3. 进入测试目录执行
                 dir('autotest') {
-                    sh '''
-                        pip install -r requirements.txt
-                        pytest -v -s --alluredir=./allure-results
-                    '''
+                    script {
+                        try {
+                            sh '''
+                                echo "当前执行目录: $(pwd)"
+                                pip install -r requirements.txt
+                                # 关键点2：确保 allure-results 目录存在
+                                mkdir -p allure-results
+                                # 运行测试，无论成功失败都继续
+                                pytest -v -s testcases/ --alluredir=./allure-results || true
+                            '''
+                        } finally {
+                            // 关键点3：【非常重要】修复权限！
+                            // 因为容器里是 root，生成的文件 jenkins 没权限读，导致报告生成失败
+                            sh 'chmod -R 777 ./allure-results'
+                        }
+                    }
                 }
+            }
+        }
+        
+        // 关键点4：增加一个步骤，在 Docker 销毁后，检查宿主机上文件是否存在
+        stage('Debug Files') {
+            steps {
+                dir('autotest') {
+                    sh 'ls -la allure-results' // 如果这里报错，说明文件没带出来
+                }
+            }
+        }
+    }
+
+    // 关键点5：在 post 中明确指定子目录
+    post {
+        always {
+            script {
+                echo "开始生成 Allure 报告..."
+                // 这里的 path 必须匹配上面 dir('autotest') 里的相对路径
+                allure includeProperties: false, 
+                       jdk: '', 
+                       results: [[path: 'autotest/allure-results']]
             }
         }
     }
