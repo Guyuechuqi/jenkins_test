@@ -32,7 +32,7 @@ pipeline {
                 dir('autotest') {
                     sh '''
                         pip install -r requirements.txt
-                        pytest -v -s testcases/ --alluredir=../allure-results
+                        pytest -v -s --alluredir=./allure-results
                     '''
                 }
             }
