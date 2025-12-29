@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout App') {
+        stage('Checkout') {
             steps {
                 checkout scm
                 echo "开发代码拉取完毕"
