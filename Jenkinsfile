@@ -14,6 +14,7 @@ pipeline {
                 dir('autotest') {
                     // 这里的 credentialsId 记得替换成你实际可用的，或者去掉如果不需要
                     git branch: 'master', url: 'https://github.com/Guyuechuqi/jenkins_interface.git', credentialsId: 'jenkins_interface'
+                    echo "测试代码拉取完毕"
                 }
             }
         }
