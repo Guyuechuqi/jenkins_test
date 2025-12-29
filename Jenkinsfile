@@ -13,7 +13,7 @@ pipeline {
             steps {
                 dir('autotest') {
                     // 这里的 credentialsId 记得替换成你实际可用的，或者去掉如果不需要
-                    git branch: 'main', url: 'https://github.com/Guyuechuqi/jenkins_interface.git', credentialsId: 'jenkins_interface'
+                    git branch: 'master', url: 'https://github.com/Guyuechuqi/jenkins_interface.git', credentialsId: 'jenkins_interface'
                 }
             }
         }
