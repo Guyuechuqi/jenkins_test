@@ -45,7 +45,7 @@ pipeline {
                     echo 'Installing dependencies and running tests...'
                     // 假设是 Python/Pytest 项目
                     sh '''
-                        pip3 install -r requirements.txt
+                        pip3 install -r requirements.txt --break-system-packages
                         # 运行测试并生成 Junit XML 报告，以便Jenkins读取
                         python3 -m pytest --alluredir=allure-results
                     '''
